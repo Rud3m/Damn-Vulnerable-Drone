@@ -7,3 +7,6 @@ mav.parm
 *.cap
 *.csv
 *.netxml
+simulator/mgmt/__pycache__/extensions.cpython-38.pyc
+simulator/mgmt/__pycache__/models.cpython-38.pyc
+simulator/mgmt/__pycache__/routes.cpython-38.pyc
