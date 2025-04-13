@@ -136,20 +136,37 @@ Each of the attack scenarios has documentation which outlines what the attack sc
 To support a wide variety of users and use cases the Damn Vulnerable Drone can be deployed in two modes. 
 Note: Building Damn Vulnerable Drones containers from source can take about 30 minutes, both installation modes will require internet access.
 
+## System Requirements
+
+- **Operating System:**
+  - **Kali Linux** (no other OS is supported)
+  - For best performance, use **bare metal**
+  - If you must use a VM, ensure **GPU passthrough** is enabled
+
+- **Hardware (Minimum):**
+  - **RAM:** 8–16 GB
+  - **Processor Cores:** 2–4
+  - **Disk Storage:** 100 GB
+  - **Swap:** 10–12 GB
+
+- **Graphics:**
+  - **Minimum GPU Requirements:**
+    - At least 2 GB of VRAM (4 GB or more recommended for complex Gazebo simulations)
+    - OpenGL 3.0 (or higher) support
+  - **Dedicated GPU** strongly recommended for best performance 
+    - Integrated GPUs may work for simple scenarios but often struggle with advanced simulations
+  - **VM Environments:**
+    - Enable **GPU passthrough** if possible
+    - Enable **3D Acceleration** if possible
+    - Allocate at least 2 GB of virtual video memory for Gazebo to run smoothly
+
+- **Software:**
+  - **Docker**
+  - **Docker Compose**
+
 ## Full-Deploy Mode Installation 
 
 "Full-Deploy Mode" allows for the most realistic virtual drone hacking simulation. It deploys a virtually simulated wifi network that you can interact with. This virtual wifi network acts as the data-link connection between the Ground Station and Drone Companion Computer, allowing for interesting attack scenarios. When you deploy the Damn Vulnerable Drone using Full-Deploy Mode you will have access to the "Drone_Wifi" SSID and 192.168.13.0/24 network. The 10.13.0.0/24 network is used as the sore simulator infrastructure network (and shouldn't be targetted.)
-
-The system requirements to run "Full-Deploy Mode" a Kali VM with the following minimum requirements:
-* Kali Linux VM (No other OS is supported)
-  * 8-16 GB RAM
-  * 2-4 Processor Cores
-  * 100 GB Disk Storage
-  * 10-12 GB Swap
-  * Docker
-  * Docker Compose
-
-*Note: Fully-Deploy Mode was only tested on Kali Linux*
 
 ### Install Docker & Docker Compose
 
