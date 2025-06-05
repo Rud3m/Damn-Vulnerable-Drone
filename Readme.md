@@ -164,7 +164,7 @@ Note: Building Damn Vulnerable Drones containers from source can take about 30 m
   - **Docker**
   - **Docker Compose**
 
-## Full-Deploy Mode Installation 
+## Wi-Fi Mode (aka Full-Deploy Mode) Installation 
 
 "Full-Deploy Mode" allows for the most realistic virtual drone hacking simulation. It deploys a virtually simulated wifi network that you can interact with. This virtual wifi network acts as the data-link connection between the Ground Station and Drone Companion Computer, allowing for interesting attack scenarios. When you deploy the Damn Vulnerable Drone using Full-Deploy Mode you will have access to the "Drone_Wifi" SSID and 192.168.13.0/24 network. The 10.13.0.0/24 network is used as the sore simulator infrastructure network (and shouldn't be targetted.)
 
@@ -234,7 +234,7 @@ If you ever want to check the status of your simulator you can run the status sc
 
 `sudo ./status.sh`
 
-## Half-Baked Mode Installation
+## Non-Wi-Fi Mode (aka Half-Baked Mode) Installation
 
 "Half-Baked Mode" essentially only runs the Damn Vulnerable Drone docker containers.
 Unlike "Full-Deploy Mode" you are not limited to only running "Half-Baked Mode" within a Kali Linux VM.
