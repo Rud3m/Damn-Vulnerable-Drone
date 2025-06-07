@@ -438,7 +438,7 @@ elif [ "$wifi_simulation" = "n" ]; then
     {
         echo -e "${CYAN}Starting simulation assuming drone network connectivity access..."
         echo -e "${CYAN}[+] Starting Docker Compose...${NC}"
-        docker compose up --build -d
+        docker compose up -d
         docker compose logs -f &
         echo """
 .--------------------------------------------------------------------------------.
