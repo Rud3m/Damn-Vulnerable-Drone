@@ -283,9 +283,13 @@ However, "Half-Baked Mode" does not support wifi simulations and you will need t
 
 # Mentions
 
+- [OWASP Top 10 Drone Security Risks](https://github.com/OWASP/CheatSheetSeries/issues/1412)
+- [Kitploit](https://kitploit.com/2024/09/damn-vulnerable-drone-intentionally.html/)
 - [David Bombal - Drone Hacking Demo](https://youtu.be/c1ZCHCwqWls?t=5705)
-- [Simulated Drone Hacking - Red Team Village at DEFCON 32](https://x.com/Nick_Aleks/status/1790928597244317913)
+- [Red Team Village at DEFCON 32](https://becomingahacker.org/def-con-32-red-team-village-activities-e4e20895df37)
+- [Aerospace Hacking Village DEFCON 32](https://www.aerospacevillage.org/defcon-32-workshop-schedule)
 - [Drone Hacking Simulator - Drone Software Meetup Group](https://www.meetup.com/drone-software-meetup-group/events/300478718/)
+- [National Cyber Security Service's](https://www.facebook.com/ncybersec/posts/-damn-vulnerable-drone-the-damn-vulnerable-drone-is-an-intentionally-vulnerable-/1040824904739615/)
 
 # Community Support
 
@@ -300,6 +304,11 @@ The platform maintains a [GitHub open source repository](https://github.com/nich
 If you have developed a new attack scenario, discovered a way to improve the simulation, or created educational content that could benefit others, create a [GitHub Pull Request](https://github.com/nicholasaleks/Damn-Vulnerable-Drone/pulls). Contributions can take various forms, from code patches and feature suggestions to writing documentation and creating tutorial videos.
 
 Feedback is the cornerstone of growth for the Damn Vulnerable Drone platform. Users are encouraged to provide their insights by creating a [GitHub Issue](https://github.com/nicholasaleks/Damn-Vulnerable-Drone/issues). Do your best to including any challenges faced and suggestions for enhancements. This feedback is invaluable for the ongoing development and refinement of the platform.
+
+# Roadmap
+- Support PX4 Firmware
+- Support Kali docker container
+- Support Fixed-Wing Drone models
 
 # Credits
 
