@@ -288,7 +288,8 @@ However, "Half-Baked Mode" does not support wifi simulations and you will need t
 - [David Bombal - Drone Hacking Demo](https://youtu.be/c1ZCHCwqWls?t=5705)
 - [Red Team Village at DEFCON 32](https://becomingahacker.org/def-con-32-red-team-village-activities-e4e20895df37)
 - [Aerospace Hacking Village DEFCON 32](https://www.aerospacevillage.org/defcon-32-workshop-schedule)
-- [Drone Hacking Simulator - Drone Software Meetup Group](https://www.meetup.com/drone-software-meetup-group/events/300478718/)
+- [Cyberattacks and defenses for Autonomous Navigation Systems: A systematic literature review](https://www.researchgate.net/publication/391637526_Cyberattacks_and_defenses_for_Autonomous_Navigation_Systems_A_systematic_literature_review)
+- [Drone Software Meetup Group](https://www.meetup.com/drone-software-meetup-group/events/300478718/)
 - [National Cyber Security Service's](https://www.facebook.com/ncybersec/posts/-damn-vulnerable-drone-the-damn-vulnerable-drone-is-an-intentionally-vulnerable-/1040824904739615/)
 
 # Community Support
