@@ -76,7 +76,7 @@ RUN groupadd user \
 
 # 8) Download QGroundControl
 RUN \
-    wget -P /home/user https://d176tv9ibo4jno.cloudfront.net/latest/QGroundControl.AppImage \
+    wget -P /home/user https://github.com/mavlink/qgroundcontrol/releases/download/v4.4.5/QGroundControl.AppImage \
     && chmod +x /home/user/QGroundControl.AppImage \
     && chown -R user:user /home/user
 

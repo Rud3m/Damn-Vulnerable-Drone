@@ -46,16 +46,41 @@ def send_stop_telemetry_request():
 @main.route('/qgc', methods=['POST'])
 def open_qgc():
     client = docker.from_env()
+    container_name = 'qgc-container'
+    script_path = '/usr/local/bin/entrypoint.sh'
+
     try:
-        container = client.containers.get('qgc-container')
-        exec_result = container.exec_run('/usr/local/bin/entrypoint.sh')
-        if exec_result.exit_code == 0:
-            response = make_response('Success', 200)
+        # Step 1: Get container
+        container = client.containers.get(container_name)
+        if container.status != 'running':
+            return make_response(f'Container {container_name} is not running (status: {container.status})', 400)
+
+        # Step 2: Check if script exists
+        check_script_cmd = f'test -f {script_path} && echo "EXISTS" || echo "MISSING"'
+        check_result = container.exec_run(check_script_cmd)
+        if b"MISSING" in check_result.output:
+            return make_response(f'Script not found: {script_path}', 400)
+
+        # Step 3: Check if script is executable
+        check_perm_cmd = f'test -x {script_path} && echo "EXECUTABLE" || echo "NOT_EXECUTABLE"'
+        perm_result = container.exec_run(check_perm_cmd)
+        if b"NOT_EXECUTABLE" in perm_result.output:
+            return make_response(f'Script is not executable: {script_path}', 400)
+
+        # Step 4: Run the entrypoint script
+        exec_result = container.exec_run(script_path)
+        output = exec_result.output.decode(errors='ignore').strip()
+        exit_code = exec_result.exit_code
+
+        if exit_code == 0:
+            return make_response(f'Success:\n{output}', 200)
         else:
-            response = make_response('Command failed', 400)
+            return make_response(f'Command failed with exit code {exit_code}:\n{output}', 400)
+
+    except docker.errors.NotFound:
+        return make_response(f'Container not found: {container_name}', 400)
     except Exception as e:
-        response = make_response(f'Error: {str(e)}', 400)
-    return response
+        return make_response(f'Unexpected error: {str(e)}', 500)
 
 @main.route('/')
 def index():
