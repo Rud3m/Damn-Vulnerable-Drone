@@ -38,6 +38,8 @@ services:
   companion-computer:
     container_name: companion-computer
     privileged: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "3000:3000"
     build:
