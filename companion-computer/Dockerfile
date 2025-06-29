@@ -6,36 +6,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 EXPOSE 3000 5000 22
 
 RUN apt-get update && apt-get install -y \
-    apt-utils \
-    curl \
-    iproute2 \
-    kmod \
-    socat \
-    nano \
-    hostapd \
-    dnsmasq \
-    npm \
-    isc-dhcp-server \
-    wpasupplicant \
-    git \
-    nmap \
-    systemd \
-    python3 \
-    net-tools \
-    iputils-ping \
-    gnupg \
-    lsb-release \
-    sudo \
-    wget \
-    make \
-    g++ \
-    libnl-3-dev \
-    libnl-genl-3-dev \
-    python3 \
-    python3-pip \
-    openssh-server \
-    && pip3 install future pymavlink MAVProxy \
-    && rm -rf /var/lib/apt/lists/*
+    apt-utils curl iproute2 kmod socat nano hostapd dnsmasq npm isc-dhcp-server \
+    wpasupplicant git nmap systemd python3 net-tools iputils-ping gnupg lsb-release \
+    sudo wget make g++ libnl-3-dev libnl-genl-3-dev python3 python3-pip openssh-server \
+    libxml2-dev libxslt1-dev zlib1g-dev python3-dev pkg-config cython3 \
+ && pip3 install --no-cache-dir future pymavlink MAVProxy \
+ && rm -rf /var/lib/apt/lists/*
 
 # Install ROS
 RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
