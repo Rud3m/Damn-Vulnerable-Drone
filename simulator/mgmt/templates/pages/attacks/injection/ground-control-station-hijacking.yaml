@@ -44,13 +44,9 @@ sections:
           Execute a deauthentication attack to disconnect the GCS from the network.
           See: <a href="/attacks/dos/wireless-deauthentication">Wifi Deauth Attack</a>
 
-      - title: Step 4. Install QGroundControl (if on x86_64 System)
+      - title: Step 4. Launch/Install QGroundControl
         description: |
-          Install QGroundControl on your attacker machine (if supported) - Note: This will be different from the QGroundControl you launch from the DVD Simulator (As this has a fixed IP of 10.13.0.6 from the docker network)
-          ```wget https://s3-us-west-2.amazonaws.com/qgroundcontrol/latest/QGroundControl.AppImage
-          chmod +x QGroundControl.AppImage
-          ./QGroundControl.AppImage
-          ```
+          Click on Launch QGroundControl from your DVD Simulator. If you get an error, can also follow this guide to install QGroundControl on Arm64 (Apple Silicon machines): https://github.com/nicholasaleks/Damn-Vulnerable-Drone/wiki/Running-QGround-Control-from-Apple-Silicon-(arm64)-hosts
 
       - title: Step 5. Install MavProxy (if on ARM systems like Apple Silicon)
         description: |
