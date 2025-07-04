@@ -110,20 +110,9 @@ This state involves the handling of all data collected during the flight, includ
 
 # Attack Scenarios
 
-The list of attack scenarios below is organized by stages. Note that some attacks are only possible during certain flight states.
+The full list of Damn Vulnerable Drone attack scenarios and detailed walkthroughs can be found in the project's wiki here: [https://github.com/nicholasaleks/Damn-Vulnerable-Drone/wiki/Attack-Scenarios](https://github.com/nicholasaleks/Damn-Vulnerable-Drone/wiki/Attack-Scenarios)
 
-| Reconnaissance              | Protocol Tampering   | Denial of Service            | Injection                      | Exfiltration           | Firmware Attacks      |
-|-----------------------------|----------------------|------------------------------|--------------------------------|------------------------|-----------------------|
-| Wifi Analysis & Cracking    | Telemetry Spoofing   | Battery Drain Attack         | MAVLink Command Injection      | Flight Log Extraction  | Firmware Decompile    |
-| Drone Discovery             | Flight Mode Spoofing | Communication Link Flooding  | Camera Gimbal Takeover         | Parameter Extraction   | Firmware Modding      |
-| Packet Sniffing             | Drone State Spoofing | Denial-of-Takeoff            | Waypoint Injection             | Mission Extraction     |                       |
-| Protocol Fingerprinting     | GPS Spoofing         | Geo-Squeezing                | Sensor Data Injection          | FTP Eavesdropping      |                       |
-| GPS & Telemetry Analysis    |                      | Altitude Limiting            | Flight Mode Injection          | Camera Feed Eavesdropping |                    |
-| Payload Detection           |                      | GPS Jamming                  |                                |                        |                       |
-|                             |                      | Wireless Deauthentication    |                                |                        |                       |
-
-
-## Example Attack Scenario Walkthrough
+## In-app Documentation & Walkthrough
 
 Each of the attack scenarios has documentation which outlines what the attack scenario is, as well as a **Spoiler** step-by-step walkthrough for users to follow in order to execute the attack. These spoiler walkthroughs are hidden been a button, which when clicked will reveal the instructions.
 

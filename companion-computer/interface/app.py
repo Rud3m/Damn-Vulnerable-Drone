@@ -1,191 +1,313 @@
-from flask import Flask, render_template, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from flask_socketio import SocketIO, emit
+from __future__ import annotations
+
+"""
+Companion‑computer HTTP / Socket.IO server for Damn Vulnerable Drone.
+
+Changes from the original version
+---------------------------------
+* **Dynamic host‑gateway detection** – instead of hard‑coding
+  `host.docker.internal`, we discover the Docker‑Desktop host gateway
+  address at runtime and add it as a default `UdpDestination`.
+* Centralised `get_host_gateway_ip()` helper with fall‑backs for Linux,
+  Darwin (Mac) and plain IPv4 broadcast.
+* `initialize_udp_destinations()` rewrites now guard against duplicates
+  and only insert destinations that resolve.
+* Minor lint / typing fixes (PEP 8 compliant, logging improvements).
+"""
+
+from pathlib import Path
+import os
 import json
-import time
-from models import UdpDestination, TelemetryStatus, User
+import logging
+import socket
 import subprocess
 import threading
-from extensions import db
-from routes.telemetry import telemetry_bp
-from routes.logs import logs_bp
-from routes.wifi import wifi_bp
-from routes.camera import camera_bp
-from mavlink_connection import listen_to_mavlink, initialize_socketio
-import logging
+import time
 from logging.handlers import RotatingFileHandler
-import os
+from typing import Optional
+
 import rospy
-from flask_login import LoginManager
-from flask_login import current_user, login_user, logout_user, login_required
-from flask import request, redirect, url_for, flash, make_response
+from flask import (
+    Flask,
+    flash,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
+from flask_login import (
+    LoginManager,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
+from flask_socketio import SocketIO, emit
 
+from extensions import db
+from mavlink_connection import initialize_socketio, listen_to_mavlink
+from models import TelemetryStatus, UdpDestination, User
+from routes.camera import camera_bp
+from routes.logs import logs_bp
+from routes.telemetry import telemetry_bp
+from routes.wifi import wifi_bp
 
-socketio = SocketIO()
-login_manager = LoginManager()
-login_manager.login_view = 'login'
+# ---------------------------------------------------------------------------
+# Globals / singletons
+# ---------------------------------------------------------------------------
+
+socketio: SocketIO = SocketIO()
+login_manager: LoginManager = LoginManager()
+login_manager.login_view = "login"
 login_manager.login_message = "You must be logged in to access this page."
 
+DATABASE_PATH = "sqlite:///telemetry.db"
+CONFIG_FILE = Path("/interface/config.json")
+LOG_PATH = Path("logs/damn-vulnerable-companion-computer.log")
+
+# ---------------------------------------------------------------------------
+# Helper functions
+# ---------------------------------------------------------------------------
+
+def get_host_gateway_ip() -> Optional[str]:
+    """Return the Docker‑Desktop host‑gateway IPv4 address if reachable.
+
+    Strategy:
+    1. Try the magic hostname ``host.docker.internal`` using a pure IPv4
+       lookup (`getent ahostsv4`). This covers Linux with a recent Docker.
+    2. Fall back to parsing ``ip route`` / ``route -n`` default gateway.
+    3. Final fall‑back: return *None* – caller may choose to use broadcast
+       (255.255.255.255) instead.
+    """
+
+    # 1. Try getent (present in Debian/Ubuntu Alpine, etc.)
+    try:
+        out = subprocess.check_output(
+            ["getent", "ahostsv4", "host.docker.internal"],
+            stderr=subprocess.DEVNULL,
+            text=True,
+        ).strip()
+        if out:
+            # First field of first line is the IPv4.
+            return out.split()[0]
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass
+
+    # 2. Parse the default gateway from ip route
+    try:
+        out = subprocess.check_output(
+            ["ip", "route"], stderr=subprocess.DEVNULL, text=True
+        )
+        for line in out.splitlines():
+            if line.startswith("default"):
+                return line.split()[2]
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass
+
+    # 3. Older busybox `route -n` (rare)
+    try:
+        out = subprocess.check_output(
+            ["route", "-n"], stderr=subprocess.DEVNULL, text=True
+        )
+        for line in out.splitlines():
+            cols = line.split()
+            if cols and cols[0] == "0.0.0.0":
+                return cols[1]
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Flask / Socket.IO setup
+# ---------------------------------------------------------------------------
+
 @login_manager.user_loader
-def load_user(user_id):
+def load_user(user_id: str) -> Optional[User]:
     return User.query.get(int(user_id))
 
-def configure_logging(app):
-    # Configure logging
-    if not os.path.exists('logs'):
-        os.makedirs('logs')
-    file_handler = RotatingFileHandler('logs/damn-vulnerable-companion-computer.log', maxBytes=10240, backupCount=10)
-    file_handler.setFormatter(logging.Formatter(
-        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'))
+
+def configure_logging(app: Flask) -> None:
+    LOG_PATH.parent.mkdir(exist_ok=True)
+    file_handler = RotatingFileHandler(LOG_PATH, maxBytes=10_240, backupCount=10)
+    file_handler.setFormatter(
+        logging.Formatter("%(asctime)s %(levelname)s: %(message)s [%(pathname)s:%(lineno)d]")
+    )
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
 
-def create_app():
+
+def create_app() -> Flask:
     app = Flask(__name__)
-    app.secret_key = 'supersecretkey'
+    app.secret_key = os.environ.get("FLASK_SECRET_KEY", "supersecretkey")
+
+    # Initialise extensions
     login_manager.init_app(app)
-    rospy.init_node('camera_display_node', anonymous=True)
-
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///telemetry.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-    db.init_app(app)
     socketio.init_app(app)
     initialize_socketio(socketio)
+    rospy.init_node("camera_display_node", anonymous=True)
+
+    # Flask‑SQLAlchemy
+    app.config.update(
+        SQLALCHEMY_DATABASE_URI=DATABASE_PATH,
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    )
+    db.init_app(app)
 
     configure_logging(app)
 
-    # Load configuration
-    with open('/interface/config.json') as config_file:
-        config = json.load(config_file)
+    # App configuration file (optional)
+    if CONFIG_FILE.exists():
+        with CONFIG_FILE.open() as fp:
+            app.config.update(json.load(fp))
 
     # Register blueprints
-    app.register_blueprint(telemetry_bp, url_prefix='/telemetry')
-    app.register_blueprint(logs_bp, url_prefix='/logs')
-    app.register_blueprint(wifi_bp, url_prefix='/wifi')
-    app.register_blueprint(camera_bp, url_prefix='/camera')
+    app.register_blueprint(telemetry_bp, url_prefix="/telemetry")
+    app.register_blueprint(logs_bp, url_prefix="/logs")
+    app.register_blueprint(wifi_bp, url_prefix="/wifi")
+    app.register_blueprint(camera_bp, url_prefix="/camera")
 
-    @app.route('/')
+    # -------------------- Routes --------------------
+
+    @app.route("/")
     @login_required
     def index():
-        return render_template('index.html')
-    
-    @app.route('/login', methods=['GET', 'POST'])
+        return render_template("index.html")
+
+    @app.route("/login", methods=["GET", "POST"])
     def login():
         if current_user.is_authenticated:
-            return redirect(url_for('index'))
+            return redirect(url_for("index"))
 
-        if request.method == 'POST':
-            username = request.form.get('username')
-            password = request.form.get('password')
-            remember = request.form.get('remember_me') == 'on'
+        if request.method == "POST":
+            username = request.form.get("username")
+            password = request.form.get("password")
+            remember = request.form.get("remember_me") == "on"
 
             user = User.query.filter_by(username=username).first()
             if user and user.check_password(password):
                 login_user(user, remember=remember)
-                next_page = request.args.get('next') or url_for('index')
-                return redirect(next_page)
-            else:
-                flash('Invalid username or password')
-                response = make_response(render_template('login.html'))
-                response.status_code = 403
-                return response
+                return redirect(request.args.get("next") or url_for("index"))
 
-        return render_template('login.html')
+            flash("Invalid username or password")
+            response = make_response(render_template("login.html"))
+            response.status_code = 403
+            return response
 
-    @app.route('/logout')
+        return render_template("login.html")
+
+    @app.route("/logout")
     def logout():
         logout_user()
-        return redirect(url_for('index'))
+        return redirect(url_for("index"))
 
-    @app.route('/config', methods=['GET'])
+    @app.route("/config", methods=["GET"])
     def get_config():
-        with open('/interface/config.json') as config_file:
-            config = json.load(config_file)
-        return jsonify(config)
+        if CONFIG_FILE.exists():
+            with CONFIG_FILE.open() as fp:
+                return jsonify(json.load(fp))
+        return jsonify({}), 404
 
-    @socketio.on('connect')
-    def handle_connect(auth):
+    # --------------- Socket.IO handlers ---------------
+
+    @socketio.on("connect")
+    def handle_connect(auth):  # noqa: D401, ANN001
         telemetry_status = TelemetryStatus.query.first()
-
-        if telemetry_status and telemetry_status.status == "Connected":
-            try:
-                subprocess.run(["pgrep", "-f", "mavlink-routerd"], check=True)
-            except subprocess.CalledProcessError:
-                telemetry_status.status = "Not Connected"
-                db.session.commit()
-        elif telemetry_status and telemetry_status.status == "Connecting":
-            try:
-                subprocess.run(["pgrep", "-f", "mavlink-routerd"], check=True)
-            except subprocess.CalledProcessError:
-                telemetry_status.status = "Not Connected"
-                db.session.commit()
-        else:
+        if not telemetry_status:
             telemetry_status = TelemetryStatus(status="Not Connected")
             db.session.add(telemetry_status)
             db.session.commit()
 
-        emit('telemetry_status', {'isTelemetryRunning': telemetry_status.status})
+        # Check if mavlink‑routerd is running when status says so
+        if telemetry_status.status in {"Connected", "Connecting"}:
+            try:
+                subprocess.run(["pgrep", "-f", "mavlink-routerd"], check=True)
+            except subprocess.CalledProcessError:
+                telemetry_status.status = "Not Connected"
+                db.session.commit()
 
-    @socketio.on('disconnect')
-    def handle_disconnect():
-        emit('telemetry_status', {'status': 'disconnected'})
+        emit("telemetry_status", {"isTelemetryRunning": telemetry_status.status})
+
+    @socketio.on("disconnect")
+    def handle_disconnect():  # noqa: D401
+        emit("telemetry_status", {"status": "disconnected"})
 
     return app
 
-def add_default_user():
-    
-    # Check if the default user exists
-    default_user = User.query.filter_by(username='admin').first()
-    if not default_user:
-        # Create and add the default user
-        new_user = User(username='admin')
-        new_user.set_password('cyberdrone')
+
+# ---------------------------------------------------------------------------
+# DB initialisation helpers
+# ---------------------------------------------------------------------------
+
+def add_default_user() -> None:
+    if not User.query.filter_by(username="admin").first():
+        new_user = User(username="admin")
+        new_user.set_password("cyberdrone")
         db.session.add(new_user)
         db.session.commit()
-        print('Added default user')
+
+
+def initialize_udp_destinations() -> None:
+    """Insert sensible default UDP endpoints if none exist."""
+
+    if UdpDestination.query.first():
+        return  # already populated
+
+    # 1. Local MAVProxy/MAVLink consumer inside container
+    db.session.add(UdpDestination(ip="127.0.0.1", port=14540))
+
+    # 2. On‑board Wi‑Fi AP clients (static subnet detection)
+    ip_list = subprocess.check_output("hostname -I", shell=True, text=True).split()
+    if "192.168.13.1" in ip_list:
+        db.session.add(UdpDestination(ip="192.168.13.14", port=14550))
     else:
-        print('Default user already exists')
+        db.session.add(UdpDestination(ip="10.13.0.4", port=14550))
 
-def initialize_udp_destinations():
+    # 3. Ground‑control station inside same Docker‑compose net
+    db.session.add(UdpDestination(ip="10.13.0.6", port=14550))
 
-    default_destination = UdpDestination.query.filter_by(ip='127.0.0.1', port=14540).first()
-    if not default_destination:
-        local_destination = UdpDestination(ip='127.0.0.1', port=14540)
-        db.session.add(local_destination)
+    # 4. External QGroundControl on the host (Docker‑Desktop gateway)
+    host_ip = get_host_gateway_ip()
 
-        ip_list = subprocess.check_output("hostname -I", shell=True).decode().split(" ")
-        if "192.168.13.1" in ip_list:
-            # Add 192.168.13.14 as a default destination
-            gcs_destination = UdpDestination(ip='192.168.13.14', port=14550)
-        else:
-            # Add 10.13.0.4 as a default destination
-            gcs_destination = UdpDestination(ip='10.13.0.4', port=14550)
+    if host_ip:
+        if not UdpDestination.query.filter_by(ip=host_ip, port=14550).first():
+            db.session.add(UdpDestination(ip=host_ip, port=14550))
+    else:
+        # Final fallback: broadcast
+        if not UdpDestination.query.filter_by(ip="255.255.255.255", port=14550).first():
+            db.session.add(UdpDestination(ip="255.255.255.255", port=14550))
 
-        db.session.add(gcs_destination)
-
-        # Add default connection to QGC
-        qgc_destination = UdpDestination(ip='10.13.0.6', port=14550)
-        db.session.add(qgc_destination)
-
-        db.session.commit()
+    db.session.commit()
 
 
-def start_mavlink_thread():
+# ---------------------------------------------------------------------------
+# MAVLink thread helper
+# ---------------------------------------------------------------------------
+
+def start_mavlink_thread() -> None:
     while True:
-        mavlink_thread = threading.Thread(target=listen_to_mavlink)
-        mavlink_thread.start()
-        mavlink_thread.join()  # Wait for the thread to finish
-        print("MAVLink thread stopped, restarting in 5 seconds...")
-        time.sleep(5)  # Wait a bit before restarting
+        t = threading.Thread(target=listen_to_mavlink, daemon=True)
+        t.start()
+        t.join()  # Block until it exits
+        print("MAVLink thread stopped, restarting in 5 seconds …")
+        time.sleep(5)
 
-if __name__ == '__main__':
+
+# ---------------------------------------------------------------------------
+# Entrypoint
+# ---------------------------------------------------------------------------
+
+if __name__ == "__main__":
     app = create_app()
 
     with app.app_context():
         db.create_all()
         add_default_user()
         initialize_udp_destinations()
-        threading.Thread(target=start_mavlink_thread).start()
-        app.logger.info('Application startup')
-    socketio.run(app, debug=True, host='0.0.0.0', port=3000, allow_unsafe_werkzeug=True)
+        threading.Thread(target=start_mavlink_thread, daemon=True).start()
+        app.logger.info("Application startup")
+
+    socketio.run(app, debug=True, host="0.0.0.0", port=3000, allow_unsafe_werkzeug=True)
