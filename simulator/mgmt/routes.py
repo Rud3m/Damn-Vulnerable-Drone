@@ -13,7 +13,6 @@ import yaml
 import re
 
 
-
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
@@ -46,7 +45,7 @@ def send_stop_telemetry_request():
 @main.route('/qgc', methods=['POST'])
 def open_qgc():
     client = docker.from_env()
-    container_name = 'qgc-container'
+    container_name = 'ground-control-station'
     script_path = '/usr/local/bin/entrypoint.sh'
 
     try:
