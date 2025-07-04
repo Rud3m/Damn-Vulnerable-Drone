@@ -64,13 +64,13 @@ USER user
 WORKDIR /home/user
 
 # 9) Entry-point scripts
-COPY --chown=user:user ./qgc/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chown=user:user ./ground-control-station/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN \
     mkdir /home/user/scripts \
     && ln -s /usr/local/bin/entrypoint.sh /home/user/scripts/entrypoint.sh
 
 # 10) QGC config
-COPY ./qgc/config /home/user/.config/QGroundControl.org
+COPY ./ground-control-station/conf/QGroundControl.ini /home/user/.config/QGroundControl.org
 
 CMD echo "Ground Control Online..." && /usr/bin/expect /init
 

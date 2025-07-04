@@ -1,28 +1,4 @@
 services:
-  qgc:
-    privileged: true
-    build:
-      context: .
-      dockerfile: ./qgc/Dockerfile
-      args:
-        BASEIMAGE: ubuntu
-        BASETAG: 22.04
-    environment:
-      # -----------DEFAULT VALUE DO NOT MODIFY-----------
-      - DISPLAY=${DISPLAY}
-      - QT_NO_MITSHM=1
-      - XDG_RUNTIME_DIR=/tmp
-      - HEADLESS=0
-    volumes:
-      - /tmp/.X11-unix:/tmp/.X11-unix
-    devices:
-      - /dev/dri:/dev/dri
-    container_name: qgc-container
-    image: kestr3l/qgc-app:nobg-4.0.0 
-    networks:
-      simulator:
-        ipv4_address: 10.13.0.6
-
   flight-controller:
     container_name: flight-controller
     privileged: true
@@ -58,6 +34,15 @@ services:
   ground-control-station:
     container_name: ground-control-station
     privileged: true
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_NO_MITSHM=1
+      - XDG_RUNTIME_DIR=/tmp
+      - HEADLESS=0
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    devices:
+      - /dev/dri:/dev/dri
     build:
       context: .
       dockerfile: ./ground-control-station/Dockerfile
