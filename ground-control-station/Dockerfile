@@ -67,7 +67,8 @@ WORKDIR /home/user
 COPY --chown=user:user ./ground-control-station/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN \
     mkdir /home/user/scripts \
-    && ln -s /usr/local/bin/entrypoint.sh /home/user/scripts/entrypoint.sh
+    && ln -s /usr/local/bin/entrypoint.sh /home/user/scripts/entrypoint.sh \
+    && chmod +x /usr/local/bin/entrypoint.sh
 
 # 10) QGC config
 COPY ./ground-control-station/conf/QGroundControl.ini /home/user/.config/QGroundControl.org
