@@ -75,10 +75,22 @@ RUN groupadd user \
  && usermod -a -G dialout user
 
 # 8) Download QGroundControl
-RUN \
-    wget -P /home/user https://github.com/mavlink/qgroundcontrol/releases/download/v4.4.5/QGroundControl.AppImage \
-    && chmod +x /home/user/QGroundControl.AppImage \
-    && chown -R user:user /home/user
+# Define environment variable for architecture
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then \
+        wget -P /home/user https://qgroundcontrol.s3-us-west-2.amazonaws.com/builds/master/QGroundControl-x86_64.AppImage \
+        && mv /home/user/QGroundControl-x86_64.AppImage /home/user/QGroundControl.AppImage \
+        && chmod +x /home/user/QGroundControl.AppImage \
+        && chown -R user:user /home/user; \
+    elif [ "$ARCH" = "aarch64" ]; then \
+        wget -P /home/user https://qgroundcontrol.s3-us-west-2.amazonaws.com/builds/master/QGroundControl-aarch64.AppImage \
+        && mv /home/user/QGroundControl-aarch64.AppImage /home/user/QGroundControl.AppImage \
+        && chmod +x /home/user/QGroundControl.AppImage \
+        && chown -R user:user /home/user; \
+    else \
+        echo "Unsupported architecture: $ARCH"; \
+        exit 1; \
+    fi
 
 USER user
 WORKDIR /home/user
