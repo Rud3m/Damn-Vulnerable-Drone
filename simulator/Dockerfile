@@ -47,7 +47,7 @@ RUN apt update -y && apt install -y ros-noetic-ros-base ros-noetic-gazebo-ros-pk
 # Install ArduPilot Gazebo Plugin
 WORKDIR /Simulator
 
-RUN git clone https://github.com/khancyr/ardupilot_gazebo.git
+RUN git clone https://github.com/nicholasaleks/ardupilot_gazebo.git
 
 # Move assets to the right place
 # 3D Models

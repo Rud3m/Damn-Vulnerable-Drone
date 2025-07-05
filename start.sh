@@ -2,6 +2,9 @@
 
 # Start Damn Vulnerable Drone simulator
 
+# Allow ground-control-station QGC app GUI
+xhost +local:docker
+
 # ANSI color codes
 CYAN='\033[0;36m'
 RED='\033[0;31m'
