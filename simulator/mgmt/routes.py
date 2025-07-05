@@ -46,7 +46,7 @@ def send_stop_telemetry_request():
 def open_qgc():
     client = docker.from_env()
     container_name = 'ground-control-station'
-    script_path = '/usr/local/bin/entrypoint.sh'
+    script_path = '/usr/local/bin/launch_qgc.sh'
 
     try:
         # Step 1: Get container
