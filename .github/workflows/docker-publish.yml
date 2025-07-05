@@ -17,19 +17,19 @@ jobs:
       matrix:
         include:
           - name: damn-vulnerable-drone-companion-computer
-            context: companion-computer
+            context: .
             file: companion-computer/Dockerfile
             platforms: linux/amd64,linux/arm64
           - name: damn-vulnerable-drone-flight-controller
-            context: flight-controller
+            context: .
             file: flight-controller/Dockerfile
             platforms: linux/amd64,linux/arm64
           - name: damn-vulnerable-drone-ground-control
-            context: ground-control-station
+            context: .
             file: ground-control-station/Dockerfile
             platforms: linux/amd64,linux/arm64
           - name: damn-vulnerable-drone-simulator
-            context: simulator
+            context: .
             file: simulator/Dockerfile
             platforms: linux/amd64,linux/arm64
 
