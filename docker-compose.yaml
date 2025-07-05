@@ -41,9 +41,12 @@ services:
       - DISPLAY=${DISPLAY}
       - QT_NO_MITSHM=1
       - XDG_RUNTIME_DIR=/tmp
+      - XAUTHORITY=/home/gcs/.Xauthority
       - HEADLESS=0
     volumes:
       - /tmp/.X11-unix:/tmp/.X11-unix
+      - ${HOME}/.Xauthority:/home/gcs/.Xauthority:ro
+      - /etc/machine-id:/etc/machine-id:ro
     devices:
       - /dev/dri:/dev/dri
     build:
