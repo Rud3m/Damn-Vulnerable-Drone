@@ -111,9 +111,7 @@ WORKDIR /home/user
 
 # 9) Entry-point scripts
 COPY --chown=user:user ./ground-control-station/launch_qgc.sh /usr/local/bin/launch_qgc.sh
-RUN \
-    mkdir /home/user/scripts \
-    && ln -s /usr/local/bin/entrypoint.sh /home/user/scripts/entrypoint.sh
+RUN chmod +x /usr/local/bin/launch_qgc.sh
 
 # 10) QGC config
 COPY ./ground-control-station/conf/QGroundControl.ini /home/user/.config/QGroundControl.org
