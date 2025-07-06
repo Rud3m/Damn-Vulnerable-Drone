@@ -2,23 +2,19 @@ name: Build & Push Docker images (multi-arch)
 
 on:
   push:
-    branches: [ master ]
-    tags:    [ "v*.*.*" ]
-  workflow_dispatch:
+    branches: [ "master" ]        # <─ builds on every push to master …
+    tags:    [ "v*.*.*" ]         #    … and on semantic-version tags
+  workflow_dispatch:              # manual runs
 
 env:
   REGISTRY: docker.io
-  REPO_OWNER: ${{ secrets.DOCKERHUB_USERNAME }}
+  USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
 jobs:
   build-push:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
 
     strategy:
-      fail-fast: false
       matrix:
         include:
           - name: damn-vulnerable-drone-companion-computer
@@ -29,7 +25,7 @@ jobs:
             context: .
             file: flight-controller/Dockerfile
             platforms: linux/amd64,linux/arm64
-          - name: damn-vulnerable-drone-ground-control
+          - name: damn-vulnerable-drone-ground-control-station
             context: .
             file: ground-control-station/Dockerfile
             platforms: linux/amd64,linux/arm64
@@ -39,42 +35,57 @@ jobs:
             platforms: linux/amd64,linux/arm64
 
     steps:
+    # ──────────────────────────────────────────────────────────────
+    #  checkout & toolchain
+    # ──────────────────────────────────────────────────────────────
     - name: Checkout source
       uses: actions/checkout@v4
 
-    # --- build prerequisites -------------------------------------------------
-    - name: Set up QEMU (cross-arch)
+    - name: Set up QEMU (cross-arch emulation)
       uses: docker/setup-qemu-action@v3
 
     - name: Set up Buildx builder
       uses: docker/setup-buildx-action@v3
 
-    # --- registry login ------------------------------------------------------
     - name: Log in to Docker Hub
       uses: docker/login-action@v3
       with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ env.REPO_OWNER }}
+        username: ${{ env.USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-    # --- compute canonical tags/labels --------------------------------------
+    # ──────────────────────────────────────────────────────────────
+    #  build-time metadata  → gives us :master / :vX.Y.Z / :sha-xxx
+    # ──────────────────────────────────────────────────────────────
     - name: Docker meta
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ matrix.name }}
+        images: ${{ env.REGISTRY }}/${{ env.USERNAME }}/${{ matrix.name }}
 
-    # --- build & push --------------------------------------------------------
+    # ──────────────────────────────────────────────────────────────
+    #  build & push the multi-arch image (all tags from meta)
+    # ──────────────────────────────────────────────────────────────
     - name: Build & push ${{ matrix.name }}
+      id: build
       uses: docker/build-push-action@v5
       with:
-        platforms:  ${{ matrix.platforms }}
         context:    ${{ matrix.context }}
         file:       ${{ matrix.file }}
+        platforms:  ${{ matrix.platforms }}
         push:       true
-        provenance: false
-        tags:   ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        tags:       ${{ steps.meta.outputs.tags }}
+        labels:     ${{ steps.meta.outputs.labels }}
+        cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.USERNAME }}/${{ matrix.name }}:buildcache
+        cache-to:   type=registry,ref=${{ env.REGISTRY }}/${{ env.USERNAME }}/${{ matrix.name }}:buildcache,mode=max
 
-        cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ matrix.name }}:buildcache
-        cache-to:   type=registry,ref=${{ env.REGISTRY }}/${{ env.REPO_OWNER }}/${{ matrix.name }}:buildcache,mode=max
+    # ──────────────────────────────────────────────────────────────
+    #  add / refresh the :latest tag **only for master branch**
+    #    (re-uses the manifest we just pushed – no extra build time)
+    # ──────────────────────────────────────────────────────────────
+    - name: Update latest tag
+      if: github.ref == 'refs/heads/master'
+      run: |
+        set -eux
+        docker buildx imagetools create \
+          --tag ${{ env.REGISTRY }}/${{ env.USERNAME }}/${{ matrix.name }}:latest \
+          ${{ env.REGISTRY }}/${{ env.USERNAME }}/${{ matrix.name }}:master
