@@ -13,12 +13,14 @@ The Damn Vulnerable Drone is an intentionally vulnerable drone hacking simulator
   * [Why was it built?](#why-was-it-built?)
   * [How does it work?](#how-does-it-work?)
   * [Features](#features)
-  * [Architecture](#architecture)
-  * [Initializing flight states](#initializing-flight-states)
-* [Attack Scenarios](#attack-scenarios)
 * [Installation](#installation)
-  * [Full-Deploy Mode Installation](#full-deploy-mode-installation)
-  * [Half-Baked Mode Installation](#half-baked-mode-installation)
+  * [System Requirements](#system-requirements)
+  * [Getting Docker](#getting-docker-key-dependency)
+  * [Wi-Fi Mode](#wi-fi-mode)
+  * [Non-Wi-Fi Mode](#non-wi-fi-mode)
+* [Architecture](#architecture)
+* [Flight States](#flight-states)
+* [Attack Scenarios](#attack-scenarios)
 * [Screenshots](#screenshots)
 * [Mentions](#mentions)
 * [Community Support](#community-support)
@@ -67,63 +69,12 @@ While the current Damn Vulnerable Drone setup doesn't mirror every drone archite
 - **Comprehensive Hacking Scenarios**: Ideal for practicing a wide range of drone hacking techniques, from basic reconnaissance to advanced exploitation.
 - **Detailed Walkthroughs**: If you need help hacking against a particular scenario you can leverage the detailed walkthrough documentation as a spoiler.
 
-## Architecture
-
-The Damn Vulnerable Drone simulation and core drone architectural components are integrated within Docker containers, providing a stable, isolated environment for each component of the drone system. Docker facilitates easy setup, consistent performance across different systems, and simplifies the process of simulating complex drone architectures and scenarios.
-
-Below is a high-level overview of the Damn Vulnerable Drone architecture:
-
-<p align="center">
-  <img src="https://github.com/nicholasaleks/Damn-Vulnerable-Drone/blob/master/simulator/mgmt/static/images/Damn-Vulnerable-Drone-Architecture.png?raw=true" alt="Damn Vulnerable Drone Architecture"/>
-</p>
-
-| Component           | Description                                                                                                                                                              | Docker IP | Wireless IP    |
-|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|----------------|
-| Flight Controller   | This is the brain of the drone, running the ArduPilot firmware to simulate a drone's flight controls. It interacts with the Gazebo simulator through a Gazebo driver, allowing it to process virtual sensor data and respond as if it were flying in the real world.                                                                                                        | 10.13.0.2 | -              |
-| Companion Computer  | The Companion Computer (attached to the drone) handles higher-level processing tasks that are too complex for the flight controller. It manages wireless networking, telemetry logs, facilitates camera streaming for surveillance or reconnaissance, and interfaces with guidance systems for autonomous operations.                            | 10.13.0.3 | 192.168.13.1   |
-| Ground Control Station | This component acts as the remote pilot's interface, providing mission planning capabilities, flight mapping, video streaming, and joystick control inputs. It communicates with the flight controller and companion computer over a simulated wireless MAVLink connection.                                                            | 10.13.0.4 | 192.168.13.14   |
-| Simulator            | Gazebo provides a richly detailed 3D world where the physics of drone flight are accurately modeled. This allows for realistic simulations of how the drone would react to control inputs and environmental factors. It’s here that the rotors spin, and the virtual drone takes to the skies, all under the watchful control of the Simulator Management Web Console. Warning: Try not to target the simulator directly as this may break the Damn Vulnerable Drone | 10.13.0.5 | -              |
-
-
-## Initializing flight states
-
-The Damn Vulnerable Drone has a range of flight states. Each flight state can be trigger by clicking on their buttons in the UI (http://localhost:8000). The ability to simulate these various flight states allows users to test and exploit different aspects of the drones operations. By clicking these states, you are essentially triggering the GCS to issue commands to the drone.
-
-<p align="center">
-  <img src="https://github.com/nicholasaleks/Damn-Vulnerable-Drone/blob/master/simulator/mgmt/static/images/flight-states.png?raw=true" alt="Damn Vulnerable Drone Flight States"/>
-</p>
-
-**1. Initial Boot:**
-This simulates the drone's startup sequence, where all systems are initialized. Clicking this will simulate you "pressing" the power on button on the drone flight controller, allowing for the companion computer to establish a connection to it. This phase is critical for security/safety checks, calibration and ensuring communication protocols are setup before flight.
-
-**2. Arm & Takeoff**
-The phase where the drone transitions from a stationary state to airborne, testing the responsiveness of flight controls and the integrity of take-off protocols. Note: This may take some time to complete as the drone requires GPS & EKF3 to be ready)
-
-**3. Autopilot Flight**
-Represents the drone's ability to navigate autonomously based on predefined waypoints or dynamic commands, a vital state for exploring vulnerabilities in navigation and control systems.
-
-**4. Emergency / Return-To-Land**
-Simulates the drone's emergency protocols, automatically returning to a home location upon triggering fail-safes or loss of control signals, which can be a target for exploitation in hacking scenarios.
-
-**5. Post-Flight Data Processing**
-This state involves the handling of all data collected during the flight, including telemetry and logs, making it an important phase for understanding data exfiltration and integrity attacks.
-
-# Attack Scenarios
-
-The full list of Damn Vulnerable Drone attack scenarios and detailed walkthroughs can be found in the project's wiki here: [https://github.com/nicholasaleks/Damn-Vulnerable-Drone/wiki/Attack-Scenarios](https://github.com/nicholasaleks/Damn-Vulnerable-Drone/wiki/Attack-Scenarios)
-
-## In-app Documentation & Walkthrough
-
-Each of the attack scenarios has documentation which outlines what the attack scenario is, as well as a **Spoiler** step-by-step walkthrough for users to follow in order to execute the attack. These spoiler walkthroughs are hidden been a button, which when clicked will reveal the instructions.
-
-<p align="center">
-  <img src="https://github.com/nicholasaleks/Damn-Vulnerable-Drone/blob/master/simulator/mgmt/static/images/Walkthrough.png?raw=true" alt="Damn Vulnerable Drone Walkthrough"/>
-</p>
-
 # Installation
 
-To support a wide variety of users and use cases the Damn Vulnerable Drone can be deployed in two modes. 
-Note: Building Damn Vulnerable Drones containers from source can take about 30 minutes, both installation modes will require internet access.
+Please review the following instructions carefully to ensure a stable and well performing Damn Vulnerable Drone lab environment.
+
+> [!NOTE]  
+> Depending on your computer’s performance and internet speed, the full end-to-end installation process including container builds and image pulls, can take between *30-60 minutes*. Be patient and let each step complete before moving forward. 
 
 ## System Requirements
 
@@ -153,11 +104,12 @@ Note: Building Damn Vulnerable Drones containers from source can take about 30 m
   - **Docker**
   - **Docker Compose**
 
-## Wi-Fi Mode (aka Full-Deploy Mode) Installation 
+> [!CAUTION]
+> Not meeting the above system requirements may cause performance issues or prevent Damn Vulnerable Drone from working properly.
 
-"Full-Deploy Mode" allows for the most realistic virtual drone hacking simulation. It deploys a virtually simulated wifi network that you can interact with. This virtual wifi network acts as the data-link connection between the Ground Station and Drone Companion Computer, allowing for interesting attack scenarios. When you deploy the Damn Vulnerable Drone using Full-Deploy Mode you will have access to the "Drone_Wifi" SSID and 192.168.13.0/24 network. The 10.13.0.0/24 network is used as the sore simulator infrastructure network (and shouldn't be targetted.)
+## Getting Docker (Key Dependency)
 
-### Install Docker & Docker Compose
+The following instructions are meant to be executed on the latest version of [Kali Linux](https://www.kali.org/).
 
 **Step 1.** Add the docker apt source
 
@@ -187,13 +139,33 @@ Note: Building Damn Vulnerable Drones containers from source can take about 30 m
 
 `git clone https://github.com/nicholasaleks/Damn-Vulnerable-Drone.git && cd Damn-Vulnerable-Drone`
 
-## Starting & Stopping Damn Vulnerable Drone
+### Build or Pull Docker Images
 
-The Damn Vulnerable Drone's *Full-Deploy Mode* includes three useful bash scripts which will help you manage the state of your simulator.
+`docker compose build`
 
-#### Build & Start
+If you’d rather download the ready-made images (which tends to be faster than local builds), run the following command to pull all Damn Vulnerable Drone images from Docker Hub:
 
-The start script is used to both build and start the Damn Vulnerable Drone simulator. This script will automatically create a `dvd.log` log file in the project directory, which you can use to view the simulator logs.
+`docker compose pull`
+
+or pulling individual Damn Vulnerable Drone images using the following:
+
+```
+docker pull n1ckaleks/damn-vulnerable-drone-flight-controller:latest
+docker pull n1ckaleks/damn-vulnerable-drone-simulator:latest
+docker pull n1ckaleks/damn-vulnerable-drone-companion-computer:latest
+docker pull n1ckaleks/damn-vulnerable-drone-ground-control-station:latest
+```
+
+## Operating Damn Vulnerable Drone
+
+Damn Vulnerable Drone includes three useful bash scripts which will help you manage the state of your simulator.
+
+#### Starting Damn Vulnerable Drone
+
+The start script is used to start Damn Vulnerable Drone simulator. This script will automatically create a `dvd.log` log file in the project directory, which you can use to view the simulator logs. 
+
+> [!TIP]  
+> If you have not already built or pulled Damn Vulnerable Drone images the `start.sh` script will automatically pull and build them for you.
 
 ```
 sudo ./start.sh -h
@@ -223,22 +195,86 @@ If you ever want to check the status of your simulator you can run the status sc
 
 `sudo ./status.sh`
 
-## Non-Wi-Fi Mode (aka Half-Baked Mode) Installation
+### Wi-Fi Mode 
 
-"Half-Baked Mode" essentially only runs the Damn Vulnerable Drone docker containers.
-Unlike "Full-Deploy Mode" you are not limited to only running "Half-Baked Mode" within a Kali Linux VM.
-However, "Half-Baked Mode" does not support wifi simulations and you will need to assume that you have an established foothold on the drone data-link connection (via the 10.13.0.0/24 network)
+"Wi-Fi Mode" (`--wifi`) allows for the most realistic virtual drone hacking simulation. It deploys a virtually simulated wireless network that you can interact with. This virtual wifi network acts as the data-link connection between the Ground Station and Drone Companion Computer, allowing for interesting scenarios from your attacker machine. When you deploy the Damn Vulnerable Drone using Wi-Fi Mode you will have access to the "Drone_Wifi" SSID and 192.168.13.0/24 network. 
 
-*Note: If you have already followed the "Full-Deploy Mode" installation instructions you can skip these steps.*
-*We assume initial access connectivity to the drone network (10.13.0.0/24)."
+> [!WARNING]  
+> The 10.13.0.0/24 network is used to run the simulator infrastructure, should you attack this network, especially the simulator container on `10.13.0.5` this could cause your instance of Damn Vulnerable Drone to crash, warranting a potentially lengthy rebuild. 
 
-### Clone the repository
+### Non-Wi-Fi Mode
 
-`git clone https://github.com/nicholasaleks/Damn-Vulnerable-Drone.git && cd Damn-Vulnerable-Drone`
+"Non-Wi-Fi Mode" (`--no-wifi`) essentially only runs the Damn Vulnerable Drone docker containers.
+Unlike "Wi-Fi Mode" you are not limited to only running "Non-Wi-Fi Mode" within a Kali Linux VM. You'll be able to practice attacking the Damn Vulnerable Drone using just the stood up containers via `docker compose up --build`
 
-### Build and Start Docker Containers
+> [!IMPORTANT]  
+> Not, "Non-Wi-Fi Mode" does not support wifi simulations and you will need to assume that you have an established initial access foothold on the drone data-link connection (via the 10.13.0.0/24 network)
 
-`docker compose up --build`
+## Architecture
+
+The Damn Vulnerable Drone simulation and core drone architectural components are integrated within Docker containers, providing a stable, isolated environment for each component of the drone system. Docker facilitates easy setup, consistent performance across different systems, and simplifies the process of simulating complex drone architectures and scenarios.
+
+Below is a high-level overview of the Damn Vulnerable Drone architecture:
+
+<p align="center">
+  <img src="https://github.com/nicholasaleks/Damn-Vulnerable-Drone/blob/master/simulator/mgmt/static/images/Damn-Vulnerable-Drone-Architecture.png?raw=true" alt="Damn Vulnerable Drone Architecture"/>
+</p>
+
+| Component           | Description                                                                                                                                                              | Docker IP | Wireless IP    |
+|---------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------|----------------|
+| Flight Controller   | This is the brain of the drone, running the ArduPilot firmware to simulate a drone's flight controls. It interacts with the Gazebo simulator through a Gazebo driver, allowing it to process virtual sensor data and respond as if it were flying in the real world.                                                                                                        | 10.13.0.2 | -              |
+| Companion Computer  | The Companion Computer (attached to the drone) handles higher-level processing tasks that are too complex for the flight controller. It manages wireless networking, telemetry logs, facilitates camera streaming for surveillance or reconnaissance, and interfaces with guidance systems for autonomous operations.                            | 10.13.0.3 | 192.168.13.1   |
+| Ground Control Station | This component acts as the remote pilot's interface, providing mission planning capabilities, flight mapping, video streaming, and joystick control inputs. It communicates with the flight controller and companion computer over a simulated wireless MAVLink connection.                                                            | 10.13.0.4 | 192.168.13.14   |
+| Simulator            | Gazebo provides a richly detailed 3D world where the physics of drone flight are accurately modeled. This allows for realistic simulations of how the drone would react to control inputs and environmental factors. It’s here that the rotors spin, and the virtual drone takes to the skies, all under the watchful control of the Simulator Management Web Console. Warning: Try not to target the simulator directly as this may break the Damn Vulnerable Drone | 10.13.0.5 | -              |
+
+
+## Flight States
+
+The Damn Vulnerable Drone has a range of flight states. Each flight state can be trigger by clicking on their buttons in the UI (http://localhost:8000). The ability to simulate these various flight states allows users to test and exploit different aspects of the drones operations. By clicking these states, you are essentially triggering the GCS to issue commands to the drone.
+
+<p align="center">
+  <img src="https://github.com/nicholasaleks/Damn-Vulnerable-Drone/blob/master/simulator/mgmt/static/images/flight-states.png?raw=true" alt="Damn Vulnerable Drone Flight States"/>
+</p>
+
+**1. Initial Boot:**
+This simulates the drone's startup sequence, where all systems are initialized. Clicking this will simulate you "pressing" the power on button on the drone flight controller, allowing for the companion computer to establish a connection to it. This phase is critical for security/safety checks, calibration and ensuring communication protocols are setup before flight.
+
+**2. Arm & Takeoff**
+The phase where the drone transitions from a stationary state to airborne, testing the responsiveness of flight controls and the integrity of take-off protocols. Note: This may take some time to complete as the drone requires GPS & EKF3 to be ready)
+
+**3. Autopilot Flight**
+Represents the drone's ability to navigate autonomously based on predefined waypoints or dynamic commands, a vital state for exploring vulnerabilities in navigation and control systems.
+
+**4. Emergency / Return-To-Land**
+Simulates the drone's emergency protocols, automatically returning to a home location upon triggering fail-safes or loss of control signals, which can be a target for exploitation in hacking scenarios.
+
+**5. Post-Flight Data Processing**
+This state involves the handling of all data collected during the flight, including telemetry and logs, making it an important phase for understanding data exfiltration and integrity attacks.
+
+# Attack Scenarios
+
+The full list of Damn Vulnerable Drone attack scenarios and detailed walkthroughs can be found in the project's wiki here: [https://github.com/nicholasaleks/Damn-Vulnerable-Drone/wiki/Attack-Scenarios](https://github.com/nicholasaleks/Damn-Vulnerable-Drone/wiki/Attack-Scenarios)
+
+| Reconnaissance                                      | Protocol Tampering                                | Denial of Service                                | Injection                                              | Exfiltration                                        | Firmware Attacks                                |
+|----------------------------------------------------|---------------------------------------------------|--------------------------------------------------|--------------------------------------------------------|---------------------------------------------------|-------------------------------------------------|
+| [Wifi Analysis & Cracking](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Wifi-Analysis-&-Cracking) | [Attitude Spoofing](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Attitude-Spoofing) | [Wifi Deauth Attack](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Wifi-Deauth-Attack) | [Ground Control Station Spoofing](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Ground-Control-Station-Spoofing) | [FTP Eavesdropping](/nicholasaleks/Damn-Vulnerable-Drone/wiki/FTP-Eavesdropping) | [Firmware Modding](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Firmware-Modding) |
+| [Drone Discovery](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Drone-Discovery)  | [Battery Spoofing](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Battery-Spoofing) | [Geofencing Attack](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Geofencing-Attack) | [Camera Gimbal Takeover](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Camera-Gimbal-Takeover) | [Parameter Extraction](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Parameter-Extraction) | [Firmware Decompile](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Firmware-Decompile) |
+| [Companion Computer Detection](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Companion-Computer-Detection) | [GPS Spoofing](/nicholasaleks/Damn-Vulnerable-Drone/wiki/GPS-Spoofing)   | [GPS Offset Glitching](/nicholasaleks/Damn-Vulnerable-Drone/wiki/GPS-Offset-Glitching) | [GPS Data Injection](/nicholasaleks/Damn-Vulnerable-Drone/wiki/GPS-Data-Injection) | [Wifi Client Data Leak](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Wifi-Client-Data-Leak) | |
+| [Ground Control Station Discovery](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Ground-Control-Station-Discovery) | [Critical Error Spoofing](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Critical-Error-Spoofing) | [Flight Termination](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Flight-Termination) | [Return to Home Point Override](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Return-to-Home-Point-Override) | [Flight Log Extraction](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Flight-Log-Extraction) | |
+| [Packet Sniffing](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Packet-Sniffing)  | [Emergency Status Spoofing](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Emergency-Status-Spoofing) | [Camera Feed ROS Topic Flooding](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Camera-Feed-ROS-Topic-Flooding) | [Companion Computer Web UI Login Brute Force](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Companion-Computer-Web-UI-Login-Brute-Force) | [Camera Feed Eavesdropping](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Camera-Feed-Eavesdropping) | |
+| [Protocol Fingerprinting](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Protocol-Fingerprinting) | [Satellite Spoofing](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Satellite-Spoofing) | [Denial-of-Takeoff](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Denial-of-Takeoff) | [Waypoint Injection](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Waypoint-Injection) | [Mission Extraction](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Mission-Extraction) | |
+| [Drone GPS & Telemetry Detection](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Drone-GPS-&-Telemetry-Detection) | [VFR HUD Spoofing](/nicholasaleks/Damn-Vulnerable-Drone/wiki/VFR-HUD-Spoofing) | [Communication Link Flooding](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Communication-Link-Flooding) | [Companion Computer Takeover](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Companion-Computer-Takeover) | | |
+|                                                    | [System Status Spoofing](/nicholasaleks/Damn-Vulnerable-Drone/wiki/System-Status-Spoofing) |                                                  | [MAVLink Injection Attack](/nicholasaleks/Damn-Vulnerable-Drone/wiki/MAVLink-Injection-Attack) | | |
+|                                                    |                                                   |                                                  | [Flight Mode Injection](/nicholasaleks/Damn-Vulnerable-Drone/wiki/Flight-Mode-Injection) | | |
+
+## Documentation & Walkthrough
+
+Each of the attack scenarios have detailed documentation which outlines what the attack scenario is, as well as a **Spoiler** step-by-step walkthrough for users to follow in order to execute the attack. These walkthroughs are hidden behind a button, which when clicked, will reveal the instructions.
+
+<p align="center">
+  <img src="https://github.com/nicholasaleks/Damn-Vulnerable-Drone/blob/master/simulator/mgmt/static/images/Walkthrough.png?raw=true" alt="Damn Vulnerable Drone Walkthrough"/>
+</p>
+
 
 # Screenshots
 

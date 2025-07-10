@@ -438,44 +438,54 @@ def convert_code_blocks(text):
         text = re.sub(r'(?<!`)`([^`]+)`(?!`)', r'<code>\1</code>', text)
     return text
 
-@main.route('/attacks/<tactic>/<filename>')
-def render_yaml(tactic, filename):
-    # Ensure the filename ends with .yaml
-    if not filename.endswith('.yaml'):
-        filename += '.yaml'
-    
-    # Define the directory where YAML files are stored
-    yaml_dir = 'templates/pages/attacks/{}/'.format(tactic)
-    
-    # Construct the full path to the YAML file
-    file_path = os.path.join(yaml_dir, filename)
-    
-    # Check if the file exists
-    if not os.path.exists(file_path):
-        abort(404)  # Return a 404 error if the file does not exist
-    
-    # Read the YAML file content
-    with open(file_path, 'r') as file:
-        yaml_content = yaml.safe_load(file)
-    
-    # Extract data from YAML
-    title = yaml_content.get('title', 'No Title')
-    description = yaml_content.get('description', '')
-    breadcrumb = yaml_content.get('breadcrumb', [])
-    sections = yaml_content.get('sections', [])
+SLUG_OVERRIDES = {}
 
-    # Convert code blocks in sections
-    for section in sections:
-        if 'content' in section and isinstance(section['content'], str):
-            section['content'] = convert_code_blocks(section['content'])
-        if 'steps' in section:
-            for step in section['steps']:
-                if isinstance(step['description'], str):
-                    step['description'] = convert_code_blocks(step['description'])
+def slugify(title: str) -> str:
+    """
+    Convert a human-readable title into a GitHub-Wiki-friendly slug.
 
-    # Render the HTML content within the template
-    return render_template('pages/attacks/template.html', title=title, description=description, breadcrumb=breadcrumb, sections=sections)
+    * Spaces/underscores → dash
+    * Keep A-Z, a-z, 0-9, dash, &
+    * Strip everything else
+    * Collapse multiple dashes
+    """
+    s = title.strip()
+    s = re.sub(r"[ _]+", "-", s)          # spaces/underscores → -
+    s = re.sub(r"[^A-Za-z0-9\-\&]", "", s)  # drop symbols except dash & &
+    s = re.sub(r"-{2,}", "-", s)          # -- → -
+    return s
 
+
+@main.route("/attacks/<tactic>/<filename>")
+def redirect_attack_scenario(tactic: str, filename: str):
+    """
+    Example:
+        /attacks/navigation/altitude-spoofing  →
+        https://github.com/nicholasaleks/Damn-Vulnerable-Drone/wiki/Altitude-Spoofing
+    """
+    # ── Locate & load the YAML file ─────────────────────────────
+    base_name = filename.rsplit(".", 1)[0]          # strip .yaml if present
+    yaml_path = os.path.join(
+        "templates", "pages", "attacks", tactic, f"{base_name}.yaml"
+    )
+
+    if not os.path.exists(yaml_path):
+        abort(404)
+
+    with open(yaml_path, "r", encoding="utf-8") as f:
+        yaml_content = yaml.safe_load(f) or {}
+
+    title = yaml_content.get("title", base_name)
+
+    # ── Build the Wiki slug ────────────────────────────────────
+    wiki_slug = SLUG_OVERRIDES.get(title, slugify(title))
+
+    wiki_url = (
+        f"https://github.com/nicholasaleks/Damn-Vulnerable-Drone/wiki/{wiki_slug}"
+    )
+
+    # ── Redirect the user ──────────────────────────────────────
+    return redirect(wiki_url, code=302)
 
 ###############################
 # Errors
