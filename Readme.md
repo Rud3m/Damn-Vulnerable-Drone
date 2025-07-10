@@ -316,6 +316,7 @@ Each of the attack scenarios have detailed documentation which outlines what the
 - [Cyberattacks and defenses for Autonomous Navigation Systems: A systematic literature review](https://www.researchgate.net/publication/391637526_Cyberattacks_and_defenses_for_Autonomous_Navigation_Systems_A_systematic_literature_review)
 - [Drone Software Meetup Group](https://www.meetup.com/drone-software-meetup-group/events/300478718/)
 - [National Cyber Security Service's](https://www.facebook.com/ncybersec/posts/-damn-vulnerable-drone-the-damn-vulnerable-drone-is-an-intentionally-vulnerable-/1040824904739615/)
+- [OWASP Tunisia Chapter, Drone Security - Helmi Rais](https://www.youtube.com/watch?v=30gvG5EByHw)
 
 # Community Support
 
