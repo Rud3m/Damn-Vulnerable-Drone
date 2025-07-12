@@ -39,7 +39,7 @@ def connect_to_drone(connection_string, timeout=30, retries=5):
     raise ConnectionError("Failed to connect to the drone after multiple attempts")
 
 # Read waypoints from file
-waypoints = read_waypoints('/missions/waypoints_circle.txt')
+waypoints = read_waypoints('/opt/gcs//missions/waypoints_circle.txt')
 
 master = connect_to_drone(connection_string)
 # Start mission upload

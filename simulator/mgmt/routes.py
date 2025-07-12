@@ -221,7 +221,7 @@ def stage3():
     client = docker.from_env()
     container = client.containers.get('ground-control-station')
     logging.info('Triggering Stage 3...')
-    command = "python3 /autopilot-flight.py"
+    command = "python3 /opt/gcs/stages/autopilot-flight.py"
     
     # Log the command before executing it
     logging.info("Executing command: %s", command)
@@ -251,7 +251,7 @@ def stage4():
     client = docker.from_env()
     container = client.containers.get('ground-control-station')
     logging.info('Triggering Stage 4...')
-    command = "python3 /return-to-land.py"
+    command = "python3 /opt/gcs/stages/return-to-land.py"
     
     # Log the command before executing it
     logging.info("Executing command: %s", command)
@@ -279,7 +279,7 @@ def stage5():
     client = docker.from_env()
     container = client.containers.get('ground-control-station')
     logging.info('Triggering Stage 5...')
-    command = "python3 /post-flight-analysis.py"
+    command = "python3 /opt/gcs/stages/post-flight-analysis.py"
 
     stage1 = Stage.query.filter_by(name='Stage 1').first()
     stage1.status = 'Enabled'
