@@ -190,7 +190,7 @@ def stage2():
     client = docker.from_env()
     container = client.containers.get('ground-control-station')
     logging.info('Triggering Stage 2...')
-    command = "python3 /arm-and-takeoff.py"
+    command = "python3 /opt/gcs/stages/arm-and-takeoff.py"
     
     # Log the command before executing it
     logging.info("Executing command: %s", command)
