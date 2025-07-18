@@ -135,11 +135,11 @@ The following instructions are meant to be executed on the latest version of [Ka
 
 `sudo usermod -aG docker $USER`
 
-### Clone the repository
+## Clone the repository
 
 `git clone https://github.com/nicholasaleks/Damn-Vulnerable-Drone.git && cd Damn-Vulnerable-Drone`
 
-### Build or Pull Docker Images
+## Build / Pull Docker Images
 
 `docker compose build`
 
