@@ -174,12 +174,12 @@ Usage: sudo ./start.sh [OPTION]
 Start the Damn Vulnerable Drone simulator.
 
 Options:
-  --wifi      Start the simulation with a virtual drone Wi-Fi network.
+  --wifi  [wep|wpa2]    Start the simulation with a virtual drone Wi-Fi network.
   --no-wifi   Start the simulation with instant access to the drone network (default).
   -h, --help  Display this help and exit.
 
 Example:
-  sudo ./start.sh --wifi      # Starts with virtual Wi-Fi
+  sudo ./start.sh --wifi wpa2     # Starts with virtual Wi-Fi in WPA2 mode
   sudo ./start.sh --no-wifi   # Starts without virtual Wi-Fi
 ```
 
