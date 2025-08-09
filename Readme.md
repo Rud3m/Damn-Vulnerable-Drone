@@ -197,7 +197,7 @@ If you ever want to check the status of your simulator you can run the status sc
 
 ### Wi-Fi Mode 
 
-"Wi-Fi Mode" (`--wifi`) allows for the most realistic virtual drone hacking simulation. It deploys a virtually simulated wireless network that you can interact with. This virtual wifi network acts as the data-link connection between the Ground Station and Drone Companion Computer, allowing for interesting scenarios from your attacker machine. When you deploy the Damn Vulnerable Drone using Wi-Fi Mode you will have access to the "Drone_Wifi" SSID and 192.168.13.0/24 network. 
+"Wi-Fi Mode" (`--wifi`) allows for the most realistic virtual drone hacking simulation. It deploys a virtually simulated wireless network that you can interact with. This virtual wifi network acts as the data-link connection between the Ground Station and Drone Companion Computer, allowing for interesting scenarios from your attacker machine. When you deploy the Damn Vulnerable Drone using Wi-Fi Mode you will have access to the "Drone_Wifi" SSID and 192.168.13.0/24 network. There are two wifi modes supported WEP and WPA2.
 
 > [!WARNING]  
 > The 10.13.0.0/24 network is used to run the simulator infrastructure, should you attack this network, especially the simulator container on `10.13.0.5` this could cause your instance of Damn Vulnerable Drone to crash, warranting a potentially lengthy rebuild. 
