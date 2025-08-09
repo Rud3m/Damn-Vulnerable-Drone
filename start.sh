@@ -195,6 +195,15 @@ if [ -z "$wifi_simulation" ]; then
     if [ "$OS_ID" = "kali" ]; then
         echo "Do you want to start the simulation with a virtual drone Wi-Fi network? By selecting 'No' you will start the simulation with instant access to the drone network. (Enter 'y (Yes)' or 'n (No)'): "
         read wifi_simulation
+        if [[ "$wifi_simulation" =~ ^[Yy]$ ]]; then
+            echo "What Wi-Fi mode do you want to simulate? (Enter 'wep' or 'wpa2'): "
+            read wifi_mode
+            wifi_mode=$(echo "$wifi_mode" | tr '[:upper:]' '[:lower:]')
+            if [[ "$wifi_mode" != "wep" && "$wifi_mode" != "wpa2" ]]; then
+                echo "Invalid Wi-Fi mode: $wifi_mode. Please enter 'wep' or 'wpa2'."
+                exit 1
+            fi
+        fi
     else
         echo -e "${RED}Warning: You are not running on Kali Linux!"
         echo -e "${RED}Non-Kali Linux systems have not been tested with the start.sh script."
